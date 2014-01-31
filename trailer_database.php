@@ -147,15 +147,15 @@
 		{
 			try
 			{
-				$data = HD::http_get_document(str_replace("/trailers/", "http://trailers.apple.com/moviesxml/s/", $trailer->url).strtolower(str_replace(" ", "", $trailer->type)).".xml");
+                $data = HD::http_get_document(str_replace("/trailers/", "http://trailers.apple.com/trailers/", $trailer->url).'itsxml/26-'.strtolower(str_replace(" ", "", $trailer->type)).".xml");
 				$xml = HD::parse_xml_document($data);
 				
 				$trailerFiles = array();
-				foreach ($xml->TrackList->plist->dict->array->children() as $trailerFile)
+                foreach ($xml->Protocol->plist->dict->array->children() as $trailerFile)
 				{
 					$trailerInfo = array();
 					$currentKey = null;
-					
+
 					foreach ($trailerFile->children() as $dictItem)
 					{
 						if (!isset($currentKey))
@@ -168,8 +168,20 @@
 							$currentKey = null;
 						}
 					}
-					
-					$trailerFiles[] = array("name" => $trailerInfo["songName"], "url" => $trailerInfo["previewURL"]);
+
+                    foreach ($trailerFile->dict->children() as $dictItem)
+                    {
+                        if (!isset($currentKey))
+                        {
+                            $currentKey = (string) $dictItem;
+                        }
+                        else
+                        {
+                            $trailerInfo[$currentKey] = (string) $dictItem;
+                            $currentKey = null;
+                        }
+                    }
+                    $trailerFiles[] = array("name" => $trailerInfo["songName"], "url" => $trailerInfo["URL"]);
 				}
 				
 				return array_reverse($trailerFiles);
@@ -233,4 +245,5 @@
 			return $trailerFiles;
 		}
 	}
+
 ?>
